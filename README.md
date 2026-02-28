@@ -1,6 +1,36 @@
-# Fizzy CLI
+# Fizzy CLI (Fork)
 
 A command-line interface for the [Fizzy](https://fizzy.do) API. See the official [API docs](https://github.com/basecamp/fizzy/blob/main/docs/API.md).
+
+> **Fork of [robzolkos/fizzy-cli](https://github.com/robzolkos/fizzy-cli)** with board aliases — use short names instead of board IDs everywhere.
+
+## Board Aliases
+
+Define short names for boards so you don't have to use long IDs:
+
+```bash
+# Add aliases
+fizzy board-alias add myboard BOARD_ID
+fizzy board-alias add backlog BOARD_ID
+
+# List all aliases
+fizzy board-alias list
+
+# Remove an alias
+fizzy board-alias remove myboard
+```
+
+Use aliases anywhere a board ID is accepted:
+
+```bash
+fizzy card list --board myboard
+fizzy board show backlog
+fizzy card create --board myboard --title "New task"
+fizzy card move 42 --to backlog
+FIZZY_BOARD=myboard fizzy card list
+```
+
+Aliases are stored in your global config (`~/.config/fizzy/config.yaml`) under `board_aliases:`. `fizzy board list` annotates boards with their alias if one exists. Raw board IDs still work — aliases resolve first, then pass through.
 
 ## Installation
 
@@ -136,10 +166,18 @@ fizzy version
 
 ## Commands
 
+### Board Aliases
+
+```bash
+fizzy board-alias list
+fizzy board-alias add ALIAS BOARD_ID
+fizzy board-alias remove ALIAS
+```
+
 ### Boards
 
 ```bash
-# List all boards
+# List all boards (includes alias annotation if set)
 fizzy board list
 
 # Show a board
