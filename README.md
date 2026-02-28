@@ -1,8 +1,6 @@
-# Fizzy CLI (Fork)
+# Fizzy CLI
 
 A command-line interface for the [Fizzy](https://fizzy.do) API. See the official [API docs](https://github.com/basecamp/fizzy/blob/main/docs/API.md).
-
-> **Fork of [robzolkos/fizzy-cli](https://github.com/robzolkos/fizzy-cli)** — adds board aliases so you can use short names instead of board IDs everywhere.
 
 ## Installation
 
@@ -103,51 +101,6 @@ Configuration priority (highest to lowest):
 4. Global config (`~/.config/fizzy/config.yaml` or `~/.fizzy/config.yaml`)
 5. Defaults
 
-### Board Aliases
-
-Define short names for boards in your global config:
-
-```yaml
-# ~/.config/fizzy/config.yaml
-token: fizzy_abc123...
-account: 897362094
-board_aliases:
-  visa: 03flgarh3nklbrb8uthxhvsoa
-  taxes: 03fob7ddhlb9k523s3yfz6vdk
-  misc: 03fob93y8w9sutgwdef7nmfl3
-```
-
-Or manage them via CLI:
-
-```bash
-# Add an alias
-fizzy board-alias add visa BOARD_ID
-
-# List all aliases
-fizzy board-alias list
-
-# Remove an alias
-fizzy board-alias remove visa
-```
-
-Then use aliases anywhere a board ID is accepted:
-
-```bash
-fizzy card list --board visa
-fizzy board show taxes
-fizzy card create --board misc --title "New task"
-fizzy card move 42 --to visa
-FIZZY_BOARD=visa fizzy card list
-```
-
-`fizzy board list` annotates boards with their alias:
-
-```json
-{ "name": "🇧🇷 Spousal Visa", "alias": "visa", "id": "03fl..." }
-```
-
-Aliases resolve at the CLI layer — if the input matches an alias, it's replaced with the board ID. Otherwise it passes through as-is, so raw board IDs still work.
-
 ## Quick Start
 
 1. Get your API token from My Profile → Personal Access Tokens (see [instructions](https://github.com/basecamp/fizzy/blob/main/docs/API.md#personal-access-tokens))
@@ -183,23 +136,10 @@ fizzy version
 
 ## Commands
 
-### Board Aliases
-
-```bash
-# List all aliases
-fizzy board-alias list
-
-# Add an alias
-fizzy board-alias add ALIAS BOARD_ID
-
-# Remove an alias
-fizzy board-alias remove ALIAS
-```
-
 ### Boards
 
 ```bash
-# List all boards (includes alias annotation)
+# List all boards
 fizzy board list
 
 # Show a board
