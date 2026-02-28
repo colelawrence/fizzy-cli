@@ -551,6 +551,7 @@ var cardMoveCmd = &cobra.Command{
 			exitWithError(newRequiredFlagError("to"))
 		}
 
+		cardMoveBoard = resolveBoard(cardMoveBoard)
 		cardNumber := args[0]
 
 		body := map[string]interface{}{

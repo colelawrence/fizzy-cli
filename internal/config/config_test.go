@@ -673,6 +673,167 @@ func TestSetTestConfigDir(t *testing.T) {
 	}
 }
 
+// ── Board Alias Tests ─────────────────────────────────────────────────────────
+
+func TestResolveBoard_WithAlias(t *testing.T) {
+	cfg := &Config{
+		BoardAliases: map[string]string{
+			"visa":  "abc123",
+			"house": "def456",
+		},
+	}
+
+	if got := cfg.ResolveBoard("visa"); got != "abc123" {
+		t.Errorf("expected 'abc123', got '%s'", got)
+	}
+	if got := cfg.ResolveBoard("house"); got != "def456" {
+		t.Errorf("expected 'def456', got '%s'", got)
+	}
+}
+
+func TestResolveBoard_PassthroughWhenNoAlias(t *testing.T) {
+	cfg := &Config{
+		BoardAliases: map[string]string{"visa": "abc123"},
+	}
+
+	// Unknown input passes through as-is (assumed to be a board ID)
+	if got := cfg.ResolveBoard("xyz789"); got != "xyz789" {
+		t.Errorf("expected 'xyz789', got '%s'", got)
+	}
+}
+
+func TestResolveBoard_EmptyInput(t *testing.T) {
+	cfg := &Config{
+		BoardAliases: map[string]string{"visa": "abc123"},
+	}
+
+	if got := cfg.ResolveBoard(""); got != "" {
+		t.Errorf("expected empty string, got '%s'", got)
+	}
+}
+
+func TestResolveBoard_NilAliases(t *testing.T) {
+	cfg := &Config{}
+
+	if got := cfg.ResolveBoard("anything"); got != "anything" {
+		t.Errorf("expected 'anything', got '%s'", got)
+	}
+}
+
+func TestSetBoardAlias(t *testing.T) {
+	cfg := &Config{}
+
+	cfg.SetBoardAlias("visa", "abc123")
+
+	if cfg.BoardAliases == nil {
+		t.Fatal("expected BoardAliases to be initialized")
+	}
+	if got := cfg.BoardAliases["visa"]; got != "abc123" {
+		t.Errorf("expected 'abc123', got '%s'", got)
+	}
+}
+
+func TestSetBoardAlias_Overwrite(t *testing.T) {
+	cfg := &Config{
+		BoardAliases: map[string]string{"visa": "old-id"},
+	}
+
+	cfg.SetBoardAlias("visa", "new-id")
+
+	if got := cfg.BoardAliases["visa"]; got != "new-id" {
+		t.Errorf("expected 'new-id', got '%s'", got)
+	}
+}
+
+func TestRemoveBoardAlias(t *testing.T) {
+	cfg := &Config{
+		BoardAliases: map[string]string{"visa": "abc123", "house": "def456"},
+	}
+
+	if !cfg.RemoveBoardAlias("visa") {
+		t.Error("expected RemoveBoardAlias to return true")
+	}
+	if _, exists := cfg.BoardAliases["visa"]; exists {
+		t.Error("expected 'visa' alias to be removed")
+	}
+	if _, exists := cfg.BoardAliases["house"]; !exists {
+		t.Error("expected 'house' alias to still exist")
+	}
+}
+
+func TestRemoveBoardAlias_NonExistent(t *testing.T) {
+	cfg := &Config{
+		BoardAliases: map[string]string{"visa": "abc123"},
+	}
+
+	if cfg.RemoveBoardAlias("nope") {
+		t.Error("expected RemoveBoardAlias to return false for non-existent alias")
+	}
+}
+
+func TestRemoveBoardAlias_NilMap(t *testing.T) {
+	cfg := &Config{}
+
+	if cfg.RemoveBoardAlias("nope") {
+		t.Error("expected RemoveBoardAlias to return false for nil map")
+	}
+}
+
+func TestBoardAliasForID(t *testing.T) {
+	cfg := &Config{
+		BoardAliases: map[string]string{
+			"visa":  "abc123",
+			"house": "def456",
+		},
+	}
+
+	if got := cfg.BoardAliasForID("abc123"); got != "visa" {
+		t.Errorf("expected 'visa', got '%s'", got)
+	}
+	if got := cfg.BoardAliasForID("unknown"); got != "" {
+		t.Errorf("expected empty string, got '%s'", got)
+	}
+}
+
+func TestBoardAliases_SaveAndLoad(t *testing.T) {
+	origHome := os.Getenv("HOME")
+	tempDir := t.TempDir()
+	os.Setenv("HOME", tempDir)
+	defer os.Setenv("HOME", origHome)
+
+	// Clear environment variables
+	os.Unsetenv("FIZZY_TOKEN")
+	os.Unsetenv("FIZZY_ACCOUNT")
+	os.Unsetenv("FIZZY_API_URL")
+	os.Unsetenv("FIZZY_BOARD")
+
+	cfg := &Config{
+		Token:   "test-token",
+		Account: "test-account",
+		APIURL:  DefaultAPIURL,
+		BoardAliases: map[string]string{
+			"visa":  "abc123",
+			"taxes": "def456",
+		},
+	}
+
+	if err := cfg.Save(); err != nil {
+		t.Fatalf("failed to save: %v", err)
+	}
+
+	loaded := Load()
+
+	if len(loaded.BoardAliases) != 2 {
+		t.Fatalf("expected 2 aliases, got %d", len(loaded.BoardAliases))
+	}
+	if loaded.BoardAliases["visa"] != "abc123" {
+		t.Errorf("expected visa='abc123', got '%s'", loaded.BoardAliases["visa"])
+	}
+	if loaded.BoardAliases["taxes"] != "def456" {
+		t.Errorf("expected taxes='def456', got '%s'", loaded.BoardAliases["taxes"])
+	}
+}
+
 func TestFullConfigPriorityChain(t *testing.T) {
 	// This test validates the full priority chain:
 	// CLI flags > env vars > local config > global config > defaults

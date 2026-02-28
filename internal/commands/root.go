@@ -128,9 +128,9 @@ func effectiveConfig() *config.Config {
 
 func defaultBoard(board string) string {
 	if board != "" {
-		return board
+		return resolveBoard(board)
 	}
-	return effectiveConfig().Board
+	return resolveBoard(effectiveConfig().Board)
 }
 
 func requireBoard(board string) (string, error) {
@@ -139,6 +139,11 @@ func requireBoard(board string) (string, error) {
 		return "", errors.NewInvalidArgsError("No board configured. Set --board, FIZZY_BOARD, or add 'board' to your config file")
 	}
 	return board, nil
+}
+
+// resolveBoard resolves a board alias to a board ID via config.
+func resolveBoard(input string) string {
+	return effectiveConfig().ResolveBoard(input)
 }
 
 // CommandResult holds the result of a command execution for testing.

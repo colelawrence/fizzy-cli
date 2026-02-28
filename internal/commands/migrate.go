@@ -79,7 +79,7 @@ func runMigrateBoard(cmd *cobra.Command, args []string) {
 		exitWithError(errors.NewInvalidArgsError("--from and --to accounts must be different"))
 	}
 
-	sourceBoardID := args[0]
+	sourceBoardID := resolveBoard(args[0])
 	stats := &migrationStats{
 		cardMapping: make(map[int]int),
 	}

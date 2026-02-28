@@ -47,10 +47,55 @@ func ResetTestWorkingDir() {
 
 // Config holds the CLI configuration.
 type Config struct {
-	Token   string `yaml:"token"`
-	Account string `yaml:"account"`
-	APIURL  string `yaml:"api_url"`
-	Board   string `yaml:"board"`
+	Token        string            `yaml:"token"`
+	Account      string            `yaml:"account"`
+	APIURL       string            `yaml:"api_url"`
+	Board        string            `yaml:"board"`
+	BoardAliases map[string]string `yaml:"board_aliases,omitempty"`
+}
+
+// ResolveBoard resolves a board alias to an ID. If the input is not an alias,
+// it is returned as-is (assumed to be a board ID already).
+func (c *Config) ResolveBoard(input string) string {
+	if input == "" {
+		return ""
+	}
+	if c.BoardAliases != nil {
+		if id, ok := c.BoardAliases[input]; ok {
+			return id
+		}
+	}
+	return input
+}
+
+// SetBoardAlias adds or updates a board alias.
+func (c *Config) SetBoardAlias(alias, boardID string) {
+	if c.BoardAliases == nil {
+		c.BoardAliases = make(map[string]string)
+	}
+	c.BoardAliases[alias] = boardID
+}
+
+// RemoveBoardAlias removes a board alias. Returns true if it existed.
+func (c *Config) RemoveBoardAlias(alias string) bool {
+	if c.BoardAliases == nil {
+		return false
+	}
+	if _, ok := c.BoardAliases[alias]; !ok {
+		return false
+	}
+	delete(c.BoardAliases, alias)
+	return true
+}
+
+// BoardAliasForID returns the alias for a board ID, or empty string if none.
+func (c *Config) BoardAliasForID(boardID string) string {
+	for alias, id := range c.BoardAliases {
+		if id == boardID {
+			return alias
+		}
+	}
+	return ""
 }
 
 // globalConfigPaths returns the possible global configuration file paths in order of preference.

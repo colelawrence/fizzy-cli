@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/robzolkos/fizzy-cli/internal/config"
 	"github.com/robzolkos/fizzy-cli/internal/errors"
 	"github.com/robzolkos/fizzy-cli/internal/response"
 	"github.com/spf13/cobra"
@@ -37,6 +38,20 @@ var boardListCmd = &cobra.Command{
 		resp, err := client.GetWithPagination(path, boardListAll)
 		if err != nil {
 			exitWithError(err)
+		}
+
+		// Annotate boards with aliases
+		globalCfg := config.LoadGlobal()
+		if arr, ok := resp.Data.([]interface{}); ok {
+			for _, item := range arr {
+				if board, ok := item.(map[string]interface{}); ok {
+					if id, ok := board["id"].(string); ok {
+						if alias := globalCfg.BoardAliasForID(id); alias != "" {
+							board["alias"] = alias
+						}
+					}
+				}
+			}
 		}
 
 		// Build summary
@@ -81,7 +96,7 @@ var boardShowCmd = &cobra.Command{
 			exitWithError(err)
 		}
 
-		boardID := args[0]
+		boardID := resolveBoard(args[0])
 
 		client := getClient()
 		resp, err := client.Get("/boards/" + boardID + ".json")
@@ -204,7 +219,7 @@ var boardUpdateCmd = &cobra.Command{
 			exitWithError(err)
 		}
 
-		boardID := args[0]
+		boardID := resolveBoard(args[0])
 
 		boardParams := make(map[string]interface{})
 
@@ -248,8 +263,9 @@ var boardDeleteCmd = &cobra.Command{
 			exitWithError(err)
 		}
 
+		boardID := resolveBoard(args[0])
 		client := getClient()
-		_, err := client.Delete("/boards/" + args[0] + ".json")
+		_, err := client.Delete("/boards/" + boardID + ".json")
 		if err != nil {
 			exitWithError(err)
 		}
